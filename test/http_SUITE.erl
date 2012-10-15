@@ -51,6 +51,7 @@
 -export([rest_keepalive/1]).
 -export([rest_keepalive_post/1]).
 -export([rest_nodelete/1]).
+-export([rest_patch/1]).
 -export([rest_resource_etags/1]).
 -export([rest_resource_etags_if_none_match/1]).
 -export([set_resp_body/1]).
@@ -96,6 +97,7 @@ groups() ->
 		rest_keepalive,
 		rest_keepalive_post,
 		rest_nodelete,
+		rest_patch,
 		rest_resource_etags,
 		rest_resource_etags_if_none_match,
 		set_resp_body,
@@ -251,6 +253,7 @@ init_dispatch(Config) ->
 			{[<<"forbidden_post">>], rest_forbidden_resource, [true]},
 			{[<<"simple_post">>], rest_forbidden_resource, [false]},
 			{[<<"nodelete">>], rest_nodelete_resource, []},
+			{[<<"patch">>], rest_patch_resource, []},
 			{[<<"resetags">>], rest_resource_etags, []},
 			{[<<"loop_timeout">>], http_handler_loop_timeout, []},
 			{[], http_handler, []}
@@ -696,6 +699,21 @@ rest_nodelete(Config) ->
 	{ok, Client2} = cowboy_client:request(<<"DELETE">>,
 		build_url("/nodelete", Config), Client),
 	{ok, 500, _, _} = cowboy_client:response(Client2).
+
+rest_patch(Config) ->
+	Tests = [
+		{204, [{<<"content-type">>, <<"text/plain">>}], <<"whatever">>},
+		{500, [{<<"content-type">>, <<"text/plain">>}], <<"false">>},
+		{400, [{<<"content-type">>, <<"text/plain">>}], <<"halt">>},
+		{415, [{<<"content-type">>, <<"application/json">>}], <<"bad_content_type">>}
+	],
+	Client = ?config(client, Config),
+	_ = [begin
+		{ok, Client2} = cowboy_client:request(<<"PATCH">>,
+			build_url("/patch", Config), Headers, Body, Client),
+		{ok, Status, _, _} = cowboy_client:response(Client2),
+		ok
+	end || {Status, Headers, Body} <- Tests].
 
 rest_resource_get_etag(Config, Type) ->
 	rest_resource_get_etag(Config, Type, []).
