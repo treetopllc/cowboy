@@ -72,11 +72,12 @@ upgrade(_ListenerPid, Handler, Opts, Req) ->
 		end
 	catch Class:Reason ->
 		PLReq = cowboy_req:to_list(Req),
-		error_logger:error_msg(
+		ErrorMsg = io_lib:format(
 			"** Handler ~p terminating in rest_init/2~n"
 			"   for the reason ~p:~p~n** Options were ~p~n"
 			"** Request was ~p~n** Stacktrace: ~p~n~n",
 			[Handler, Class, Reason, Opts, PLReq, erlang:get_stacktrace()]),
+		error_logger:error_msg(ErrorMsg),
 		{ok, _Req2} = cowboy_req:reply(500, Req),
 		close
 	end.

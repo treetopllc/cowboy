@@ -126,11 +126,12 @@ handler_init(State=#state{transport=Transport, handler=Handler, opts=Opts},
 	catch Class:Reason ->
 		upgrade_error(Req),
 		PLReq = cowboy_req:to_list(Req),
-		error_logger:error_msg(
+		ErrorMsg = io_lib:format(
 			"** Handler ~p terminating in websocket_init/3~n"
 			"   for the reason ~p:~p~n** Options were ~p~n"
 			"** Request was ~p~n** Stacktrace: ~p~n~n",
-			[Handler, Class, Reason, Opts, PLReq, erlang:get_stacktrace()])
+			[Handler, Class, Reason, Opts, PLReq, erlang:get_stacktrace()]),
+		error_logger:error_msg(ErrorMsg)
 	end.
 
 -spec upgrade_error(cowboy_req:req()) -> closed.
@@ -472,13 +473,14 @@ handler_call(State=#state{handler=Handler, opts=Opts}, Req, HandlerState,
 			websocket_close(State, Req2, HandlerState2, {normal, shutdown})
 	catch Class:Reason ->
 		PLReq = cowboy_req:to_list(Req),
-		error_logger:error_msg(
+		ErrorMsg = io_lib:format(
 			"** Handler ~p terminating in ~p/3~n"
 			"   for the reason ~p:~p~n** Message was ~p~n"
 			"** Options were ~p~n** Handler state was ~p~n"
 			"** Request was ~p~n** Stacktrace: ~p~n~n",
 			[Handler, Callback, Class, Reason, Message, Opts,
 			 HandlerState, PLReq, erlang:get_stacktrace()]),
+		error_logger:error_msg(ErrorMsg),
 		websocket_close(State, Req, HandlerState, {error, handler})
 	end.
 
@@ -530,13 +532,14 @@ handler_terminate(#state{handler=Handler, opts=Opts},
 		Handler:websocket_terminate(TerminateReason, Req, HandlerState)
 	catch Class:Reason ->
 		PLReq = cowboy_req:to_list(Req),
-		error_logger:error_msg(
+		ErrorMsg = io_lib:format(
 			"** Handler ~p terminating in websocket_terminate/3~n"
 			"   for the reason ~p:~p~n** Initial reason was ~p~n"
 			"** Options were ~p~n** Handler state was ~p~n"
 			"** Request was ~p~n** Stacktrace: ~p~n~n",
 			[Handler, Class, Reason, TerminateReason, Opts,
-			 HandlerState, PLReq, erlang:get_stacktrace()])
+			 HandlerState, PLReq, erlang:get_stacktrace()]),
+		error_logger:error_msg(ErrorMsg)
 	end,
 	closed.
 

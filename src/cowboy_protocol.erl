@@ -492,14 +492,15 @@ handler_init(Req, State=#state{transport=Transport}, Handler, Opts) ->
 			upgrade_protocol(Req, State, Handler, Opts, Module)
 	catch Class:Reason ->
 		error_terminate(500, Req, State),
-		error_logger:error_msg(
+		ErrorMsg = io_lib:format( 
 			"** Handler ~p terminating in init/3~n"
 			"   for the reason ~p:~p~n"
 			"** Options were ~p~n"
 			"** Request was ~p~n"
 			"** Stacktrace: ~p~n~n",
 			[Handler, Class, Reason, Opts,
-				cowboy_req:to_list(Req), erlang:get_stacktrace()])
+				cowboy_req:to_list(Req), erlang:get_stacktrace()]),
+		error_logger:error_msg(ErrorMsg)
 	end.
 
 -spec upgrade_protocol(cowboy_req:req(), #state{}, module(), any(), module())
@@ -517,7 +518,7 @@ handler_handle(Req, State, Handler, HandlerState) ->
 		{ok, Req2, HandlerState2} ->
 			terminate_request(Req2, State, Handler, HandlerState2)
 	catch Class:Reason ->
-		error_logger:error_msg(
+		ErrorMsg = io_lib:format(
 			"** Handler ~p terminating in handle/2~n"
 			"   for the reason ~p:~p~n"
 			"** Handler state was ~p~n"
@@ -525,6 +526,7 @@ handler_handle(Req, State, Handler, HandlerState) ->
 			"** Stacktrace: ~p~n~n",
 			[Handler, Class, Reason, HandlerState,
 				cowboy_req:to_list(Req), erlang:get_stacktrace()]),
+		error_logger:error_msg(ErrorMsg),
 		handler_terminate(Req, Handler, HandlerState),
 		error_terminate(500, Req, State)
 	end.
@@ -575,7 +577,7 @@ handler_call(Req, State, Handler, HandlerState, Message) ->
 			handler_before_loop(Req2, State#state{hibernate=true},
 				Handler, HandlerState2)
 	catch Class:Reason ->
-		error_logger:error_msg(
+		ErrorMsg = io_lib:format(
 			"** Handler ~p terminating in info/3~n"
 			"   for the reason ~p:~p~n"
 			"** Handler state was ~p~n"
@@ -583,6 +585,7 @@ handler_call(Req, State, Handler, HandlerState, Message) ->
 			"** Stacktrace: ~p~n~n",
 			[Handler, Class, Reason, HandlerState,
 				cowboy_req:to_list(Req), erlang:get_stacktrace()]),
+		error_logger:error_msg(ErrorMsg),
 		handler_terminate(Req, Handler, HandlerState),
 		error_terminate(500, Req, State)
 	end.
@@ -592,14 +595,15 @@ handler_terminate(Req, Handler, HandlerState) ->
 	try
 		Handler:terminate(cowboy_req:lock(Req), HandlerState)
 	catch Class:Reason ->
-		error_logger:error_msg(
+		ErrorMsg = io_lib:format(
 			"** Handler ~p terminating in terminate/2~n"
 			"   for the reason ~p:~p~n"
 			"** Handler state was ~p~n"
 			"** Request was ~p~n"
 			"** Stacktrace: ~p~n~n",
 			[Handler, Class, Reason, HandlerState,
-				cowboy_req:to_list(Req), erlang:get_stacktrace()])
+				cowboy_req:to_list(Req), erlang:get_stacktrace()]),
+		error_logger:error_msg(ErrorMsg)
 	end.
 
 -spec terminate_request(cowboy_req:req(), #state{}, module(), any()) -> ok.
